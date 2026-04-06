@@ -222,7 +222,7 @@ $transactions = mysqli_query($conn, "
 
     <!-- Jika tidak ada transaksi -->
     <?php if(mysqli_num_rows($transactions) == 0): ?>
-        <div class="alert alert-warning text-center">Belum ada transaksi</div>
+        <div class="alert alert-warning text-center">No Transactions Yet</div>
     <?php else: ?>
 
     <!-- Tabel transaksi -->

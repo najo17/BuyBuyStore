@@ -334,7 +334,7 @@ body{
     <?php else: ?>
 
         <!-- Jika belum isi alamat -->
-        <span class="text-danger">Address belum diisi</span>
+        <span class="text-danger">Fill Address First</span>
 
     <?php endif; ?>
 

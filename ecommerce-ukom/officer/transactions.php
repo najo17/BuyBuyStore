@@ -1,10 +1,9 @@
 <?php
-require_once '../auth/auth.php'; // Cek autentikasi (biasanya sudah handle session)
-require_once '../config/database.php'; // Koneksi database
+require_once '../auth/auth.php';
+require_once '../config/database.php';
 
-// Cek role apakah officer
 if ($_SESSION['role'] !== 'officer') {
-    header("Location: ../auth/login-officer.php"); // Redirect jika bukan officer
+    header("Location: ../auth/login-officer.php");
     exit;
 }
 
@@ -12,17 +11,13 @@ if ($_SESSION['role'] !== 'officer') {
    APPROVE PEMBAYARAN TRANSFER
 ================================ */
 if (isset($_POST['approve_payment'])) {
-
-    // Ambil id transaksi dari form
     $id = $_POST['transaction_id'];
 
-    // Update status jadi approved hanya untuk transfer
     mysqli_query($conn, "UPDATE transactions 
                          SET status='approved'
                          WHERE id='$id' 
                          AND payment_method='transfer'");
 
-    // Refresh halaman
     header("Location: transactions.php");
     exit;
 }
@@ -31,11 +26,8 @@ if (isset($_POST['approve_payment'])) {
    CANCEL PEMBAYARAN TRANSFER
 ================================ */
 if (isset($_POST['cancel_payment'])) {
-
-    // Ambil id transaksi
     $id = $_POST['transaction_id'];
 
-    // Update status jadi cancelled
     mysqli_query($conn, "UPDATE transactions 
                          SET status='cancelled'
                          WHERE id='$id' 
@@ -48,8 +40,6 @@ if (isset($_POST['cancel_payment'])) {
 /* ===============================
    AMBIL DATA TRANSAKSI
 ================================ */
-
-// Ambil semua transaksi
 $transactions = mysqli_query($conn, "
     SELECT * FROM transactions
     ORDER BY id DESC
@@ -58,16 +48,13 @@ $transactions = mysqli_query($conn, "
 /* ===============================
    AMBIL DATA SALES (DETAIL PRODUK)
 ================================ */
+$salesData = [];
 
-$salesData = []; // Array untuk menyimpan produk per transaksi
-
-// Ambil semua data sales
 $salesQuery = mysqli_query($conn, "
     SELECT transaction_id, product_name, quantity, subtotal
     FROM sales
 ");
 
-// Loop data sales dan kelompokkan berdasarkan transaction_id
 while($sale = mysqli_fetch_assoc($salesQuery)){
     $salesData[$sale['transaction_id']][] = $sale;
 }
@@ -78,65 +65,51 @@ while($sale = mysqli_fetch_assoc($salesQuery)){
 <head>
 <meta charset="UTF-8">
 <title>Transaction Management - Officer</title>
-
 <link rel="icon" type="image/png" href="../assets/uploads/logo.png">
 
-<!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Bootstrap Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-
-<!-- Font -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-/* Styling body */
 body {
     font-family: 'Poppins', sans-serif;
     background: #f4f4f4;
 }
 
-/* Container utama */
 .content {
     padding: 40px;
     flex: 1;
 }
 
-/* Judul halaman */
 .page-title {
     color: #FFA4A4;
     font-weight: 600;
 }
 
-/* Header tabel */
 .table thead th {
     background: #FFA4A4 !important;
     color: white !important;
     text-align: center;
 }
 
-/* Isi tabel */
 .table td {
     text-align: center;
     vertical-align: middle;
 }
 
-/* Tombol receipt */
 .btn-receipt {
     background: #63C78A;
     color: white;
     border: none;
 }
 
-/* Tombol proof */
 .btn-proof {
     background: #63C78A;
     color: white;
     border: none;
 }
 
-/* Tombol approve */
 .btn-approve {
     background: #63C78A;
     color: white;
@@ -146,13 +119,11 @@ body {
     font-size: 13px;
 }
 
-/* Hover approve */
 .btn-approve:hover {
     background: #52b477;
     color: white;
 }
 
-/* Tombol cancel */
 .btn-cancel {
     background: #EB4C4C;
     color: white;
@@ -162,28 +133,23 @@ body {
     font-size: 13px;
 }
 
-/* Hover cancel */
 .btn-cancel:hover {
     background: #d63d3d;
     color: white;
 }
 
-/* Modal styling */
 .modal-content{
     border-radius:20px;
 }
 
-/* Receipt box */
 .receipt-box{
     background:#fff;
 }
 
-/* Garis putus-putus */
 .receipt-box hr{
     border-top:1px dashed #ccc;
 }
 
-/* Item produk di receipt */
 .receipt-item{
     display:flex;
     justify-content:space-between;
@@ -191,12 +157,9 @@ body {
     font-size:14px;
 }
 
-/* Header gradient */
 .gradient-header{
     background:linear-gradient(135deg,#FFA4A4,#FF7E7E);
 }
-
-/* Address styling */
 #r-address{
     line-height:1.6;
     word-break:break-word;
@@ -208,14 +171,12 @@ body {
 
 <div class="d-flex min-vh-100">
 
-<!-- Sidebar -->
 <?php include 'sidebar.php'; ?>
 
 <div class="content">
 
 <h4 class="page-title mb-4">Transaction Management</h4>
 
-<!-- TABEL TRANSAKSI -->
 <table class="table table-bordered align-middle">
 <thead>
 <tr>
@@ -234,7 +195,7 @@ body {
 <tr>
 
 <!-- Nama customer -->
-<td><?= $row['customer_name'] ?></td>
+<td><?= htmlspecialchars($row['customer_name']) ?></td>
 
 <!-- Total pembayaran -->
 <td>Rp <?= number_format($row['total']) ?></td>
@@ -244,11 +205,10 @@ body {
 
 <td>
 <?php
-$status = strtolower($row['status']); // status transaksi
-$payment = strtolower($row['payment_method']); // metode pembayaran
+$status = strtolower($row['status']);
+$payment = strtolower($row['payment_method']);
 ?>
 
-<!-- Jika transfer dan masih pending -->
 <?php if($payment == 'transfer' && $status == 'pending'): ?>
     <div class="dropdown">
         <button class="btn btn-warning btn-sm dropdown-toggle text-dark fw-medium"
@@ -258,10 +218,8 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
             Pending
         </button>
 
-        <!-- Dropdown aksi -->
         <ul class="dropdown-menu">
             <li>
-                <!-- Approve -->
                 <form method="POST" class="m-0">
                     <input type="hidden" name="transaction_id" value="<?= $row['id'] ?>">
                     <button type="submit" name="approve_payment" class="dropdown-item text-success">
@@ -270,7 +228,6 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
                 </form>
             </li>
             <li>
-                <!-- Cancel -->
                 <form method="POST" class="m-0">
                     <input type="hidden" name="transaction_id" value="<?= $row['id'] ?>">
                     <button type="submit" name="cancel_payment" class="dropdown-item text-danger">
@@ -281,15 +238,12 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
         </ul>
     </div>
 
-<!-- Jika sudah approved -->
 <?php elseif($status == 'approved'): ?>
     <span class="badge bg-success">Approved</span>
 
-<!-- Jika cancelled -->
 <?php elseif($status == 'cancelled'): ?>
     <span class="badge bg-danger">Cancelled</span>
 
-<!-- Status lain -->
 <?php else: ?>
     <span class="badge bg-secondary"><?= ucfirst($row['status']) ?></span>
 <?php endif; ?>
@@ -301,7 +255,7 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
     <button class="btn btn-proof btn-sm"
         data-bs-toggle="modal"
         data-bs-target="#proofModal"
-        data-img="../assets/payment_proof/<?= $row['payment_proof'] ?>">
+        data-img="../assets/payment_proof/<?= htmlspecialchars($row['payment_proof']) ?>">
         View
     </button>
 <?php else: ?>
@@ -311,24 +265,23 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
 
 <!-- RECEIPT BUTTON -->
 <td>
-<button class="btn btn-receipt btn-sm"
-    data-bs-toggle="modal"
-    data-bs-target="#receiptModal"
-    data-id="<?= $row['id'] ?>"
-    data-customer="<?= htmlspecialchars($row['customer_name']) ?>"
-    data-total="<?= $row['total'] ?>"
-    data-payment="<?= $row['payment_method'] ?>"
-    data-status="<?= $row['status'] ?>"
-    data-date="<?= $row['created_at'] ?>"
-    data-address="<?= htmlspecialchars($row['shipping_address']) ?>"
-    data-products='<?= json_encode($salesData[$row["id"]] ?? []) ?>'
-    data-proof="<?= $row['payment_proof'] ?>">
-    Receipt
-</button>
+    <button class="btn btn-receipt btn-sm"
+        data-bs-toggle="modal"
+        data-bs-target="#receiptModal"
+        data-id="<?= $row['id'] ?>"
+        data-customer="<?= htmlspecialchars($row['customer_name']) ?>"
+        data-total="<?= $row['total'] ?>"
+        data-payment="<?= htmlspecialchars($row['payment_method']) ?>"
+        data-status="<?= htmlspecialchars($row['status']) ?>"
+        data-date="<?= htmlspecialchars($row['created_at']) ?>"
+        data-address="<?= htmlspecialchars($row['shipping_address']) ?>"
+        data-products='<?= htmlspecialchars(json_encode($salesData[$row["id"]] ?? []), ENT_QUOTES, 'UTF-8') ?>'
+        data-proof="<?= htmlspecialchars($row['payment_proof']) ?>">
+        Receipt
+    </button>
 </td>
 
-<!-- LOOP END -->
-<td>
+</tr>
 <?php endwhile; ?>
 
 </tbody>
@@ -336,6 +289,7 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
 
 </div>
 </div>
+
 
 <!-- ================= PROOF MODAL ================= -->
 <div class="modal fade" id="proofModal" tabindex="-1">
@@ -347,7 +301,6 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
 </div>
 
-<!-- Menampilkan gambar bukti pembayaran -->
 <div class="modal-body text-center">
     <img id="proofImage" src="" class="img-fluid rounded">
 </div>
@@ -356,7 +309,166 @@ $payment = strtolower($row['payment_method']); // metode pembayaran
 </div>
 </div>
 
+
 <!-- ================= RECEIPT MODAL ================= -->
-<!-- Modal untuk detail transaksi -->
 <div class="modal fade" id="receiptModal" tabindex="-1">
-...
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content shadow-lg border-0">
+
+<div class="modal-header gradient-header text-white">
+    <h5 class="modal-title fw-semibold">
+        <i class="bi bi-receipt-cutoff me-2"></i>
+        Transaction Receipt
+    </h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body p-4">
+
+<div class="receipt-box p-4 rounded-4 border">
+
+<h6 class="text-center fw-bold mb-3">BUYBUY STORE</h6>
+<hr>
+
+<div class="d-flex justify-content-between mb-2">
+    <span>ID</span>
+    <span id="r-id"></span>
+</div>
+
+<div class="d-flex justify-content-between mb-2">
+    <span>Customer</span>
+    <span id="r-customer"></span>
+</div>
+
+<div class="d-flex justify-content-between mb-2">
+    <span>Date</span>
+    <span id="r-date"></span>
+</div>
+
+<div class="mb-3 mt-2">
+    <span class="fw-semibold">Address</span>
+    <div id="r-address" class="small text-muted mt-1"></div>
+</div>
+
+<hr>
+
+<strong>Products:</strong>
+<div id="r-products" class="mt-2 small"></div>
+
+<hr>
+
+<div class="d-flex justify-content-between mb-2">
+    <span>Payment</span>
+    <span id="r-payment"></span>
+</div>
+
+<div class="d-flex justify-content-between mb-2">
+    <span>Status</span>
+    <span id="r-status"></span>
+</div>
+
+<div class="d-flex justify-content-between mt-3 fs-5 fw-bold">
+    <span>Total</span>
+    <span>Rp <span id="r-total"></span></span>
+</div>
+
+<div id="proofArea" class="text-center mt-4"></div>
+
+<p class="text-center small mt-4 text-muted">
+Thank you for shopping
+</p>
+
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// PROOF IMAGE
+var proofModal = document.getElementById('proofModal');
+proofModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    var img = button.getAttribute('data-img');
+    document.getElementById('proofImage').src = img;
+});
+
+// RECEIPT DATA
+var receiptModal = document.getElementById('receiptModal');
+
+receiptModal.addEventListener('show.bs.modal', function (event) {
+
+    var button = event.relatedTarget;
+
+    document.getElementById('r-id').innerText =
+        button.getAttribute('data-id');
+
+    document.getElementById('r-customer').innerText =
+        button.getAttribute('data-customer');
+
+    document.getElementById('r-date').innerText =
+        new Date(button.getAttribute('data-date'))
+        .toLocaleDateString('id-ID');
+
+        document.getElementById('r-address').innerText =
+    button.getAttribute('data-address') || '-';
+
+    document.getElementById('r-total').innerText =
+        new Intl.NumberFormat('id-ID')
+        .format(button.getAttribute('data-total'));
+
+    document.getElementById('r-payment').innerText =
+        button.getAttribute('data-payment').toUpperCase();
+
+    let status = button.getAttribute('data-status').toLowerCase();
+    let badge = '';
+
+    if(status === 'approved'){
+        badge = '<span class="badge bg-success">Approved</span>';
+    } else if(status === 'pending'){
+        badge = '<span class="badge bg-warning text-dark">Pending</span>';
+    } else {
+        badge = '<span class="badge bg-danger">Cancelled</span>';
+    }
+
+    document.getElementById('r-status').innerHTML = badge;
+
+    let products = JSON.parse(
+        button.getAttribute('data-products') || "[]"
+    );
+
+    let productHTML = '';
+
+    products.forEach(item => {
+        productHTML += `
+            <div class="receipt-item">
+                <span>${item.product_name} (x${item.quantity})</span>
+                <span>Rp ${new Intl.NumberFormat('id-ID')
+                    .format(item.subtotal)}</span>
+            </div>
+        `;
+    });
+
+    document.getElementById('r-products').innerHTML =
+        productHTML || '<span class="text-muted">No product</span>';
+
+    let proof = button.getAttribute('data-proof');
+    let proofArea = document.getElementById('proofArea');
+
+    if(proof && proof !== ""){
+        proofArea.innerHTML = `
+            <p class="fw-bold">Payment Proof</p>
+            <img src="../assets/payment_proof/${proof}"
+                 class="img-fluid rounded border shadow-sm">
+        `;
+    } else {
+        proofArea.innerHTML = '';
+    }
+});
+</script>
+
+</body>
+</html>         

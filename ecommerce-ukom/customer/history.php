@@ -299,7 +299,7 @@ $transactions = mysqli_query($conn, "
                             data-bs-toggle="modal"
                             data-bs-target="#receiptModal"
 
-                            <!-- Data dikirim ke modal -->
+                            
                             data-id="<?= htmlspecialchars($row['id']) ?>"
                             data-customer="<?= htmlspecialchars($row['customer_name']) ?>"
                             data-total="<?= htmlspecialchars($row['total']) ?>"

@@ -316,10 +316,9 @@ foreach($files as $file):
     <td>
         <div class="action-buttons">
             <!-- Tombol untuk mendownload file backup -->
-            <a href="download.php?file=<?= $file ?>" class="btn-download">
-                <i class="bi bi-download me-1"></i> Download
-            </a>
-
+            <a href="download.php?file=<?= urlencode($filename) ?>" class="btn-download">
+    <i class="bi bi-download me-1"></i> Download
+</a>
             <!-- Tombol untuk membuka modal delete -->
             <button 
                 class="btn-delete"

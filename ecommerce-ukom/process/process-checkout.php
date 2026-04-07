@@ -78,7 +78,7 @@ try {
 
     /* SIMPAN KE TRANSACTIONS */
     mysqli_query($conn,"INSERT INTO transactions 
-    (customer_id, customer_name, total, payment_method, status, address, created_at)
+    (customer_id, customer_name, total, payment_method, status, shipping_address, created_at)
     VALUES
     ('$customer_id','$customer_name','$total','$payment_method','$status','$address', NOW())
     ");
